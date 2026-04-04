@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chi tiết sản phẩm</title>
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <main class="container">
+    <a href="./index.html">← Quay lại</a>
+    <section id="productDetail" class="card"></section>
+    <section class="card">
+      <h3>Sản phẩm liên quan</h3>
+      <div id="relatedProducts" class="product-grid"></div>
+    </section>
+    <section class="card">
+      <h3>Đánh giá</h3>
+      <div id="reviewList"></div>
+      <form id="reviewForm">
+        <input type="number" min="1" max="5" id="rating" placeholder="Số sao 1-5" required />
+        <textarea id="comment" placeholder="Bình luận"></textarea>
+        <button>Gửi đánh giá</button>
+      </form>
+    </section>
+  </main>
+  <div id="toast" class="toast"></div>
+  <script src="./js/product.js"></script>
+</body>
+</html>

@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>E-Commerce Minimal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./css/style.css" />
+</head>
+<body>
+  <header class="container header">
+    <h1>NovaShop</h1>
+    <nav>
+      <a href="#">Trang chủ</a>
+      <a href="./checkout.html">Thanh toán</a>
+      <a href="./profile.html">Hồ sơ</a>
+      <a href="./admin.html">Admin</a>
+      <button id="logoutBtn" class="ghost">Đăng xuất</button>
+    </nav>
+  </header>
+
+  <main class="container">
+    <section class="filters card">
+      <input id="searchInput" placeholder="Tìm sản phẩm..." />
+      <select id="categorySelect"><option value="">Tất cả danh mục</option></select>
+      <input id="minPrice" type="number" placeholder="Giá từ" />
+      <input id="maxPrice" type="number" placeholder="Giá đến" />
+      <button id="filterBtn">Lọc</button>
+      <a class="btn" href="./login.html">Đăng nhập</a>
+    </section>
+
+    <section id="productGrid" class="product-grid"></section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script src="./js/main.js"></script>
+</body>
+</html>

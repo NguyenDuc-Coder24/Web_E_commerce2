@@ -5,7 +5,7 @@ from functools import wraps
 from flask import Blueprint, jsonify, request
 from flask_bcrypt import Bcrypt
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 from .models import Category, Coupon, Order, OrderItem, Product, Review, User, db
 
@@ -15,6 +15,14 @@ bcrypt = Bcrypt()
 
 def model_to_dict_product(product):
     avg_rating = db.session.query(func.avg(Review.rating)).filter(Review.product_id == product.id).scalar()
+    review_count = db.session.query(func.count(Review.id)).filter(Review.product_id == product.id).scalar() or 0
+    total_sold = (
+        db.session.query(func.coalesce(func.sum(OrderItem.quantity), 0))
+        .join(Order, Order.id == OrderItem.order_id)
+        .filter(OrderItem.product_id == product.id, Order.status.in_(["approved", "delivering", "delivered"]))
+        .scalar()
+        or 0
+    )
     return {
         "id": product.id,
         "name": product.name,
@@ -25,6 +33,8 @@ def model_to_dict_product(product):
         "category_id": product.category_id,
         "category_name": product.category.name if product.category else None,
         "avg_rating": round(float(avg_rating), 1) if avg_rating else 0,
+        "review_count": int(review_count),
+        "total_sold": int(total_sold),
     }
 
 
@@ -95,7 +105,8 @@ def list_products():
     max_price = request.args.get("max_price", type=float)
 
     if keyword:
-        q = q.filter(Product.name.ilike(f"%{keyword}%"))
+        pattern = f"%{keyword.strip()}%"
+        q = q.filter(or_(Product.name.ilike(pattern), Product.description.ilike(pattern)))
     if category_id:
         q = q.filter(Product.category_id == category_id)
     if min_price is not None:
@@ -189,6 +200,11 @@ def create_order():
     if not cart_items:
         return jsonify({"message": "Cart is empty"}), 400
 
+    payment_method = data.get("payment_method", "cod")
+    valid_payment_methods = ["cod", "bank", "bank_transfer"]
+    if payment_method not in valid_payment_methods:
+        return jsonify({"message": "Invalid payment method"}), 400
+
     subtotal = Decimal("0")
     order_items = []
 
@@ -219,7 +235,7 @@ def create_order():
         status="pending",
         address=data.get("address"),
         phone=data.get("phone"),
-        payment_method=data.get("payment_method", "cod"),
+        payment_method=payment_method,
         coupon_code=coupon_code or None,
     )
     db.session.add(order)
@@ -308,11 +324,19 @@ def admin_products():
 @role_required("admin")
 def admin_create_product():
     data = request.get_json() or {}
+    if not data.get("name") or data.get("price") is None or not data.get("category_id"):
+        return jsonify({"message": "Missing required fields"}), 400
+
+    category = Category.query.get(data["category_id"])
+    if not category:
+        return jsonify({"message": "Category not found"}), 404
+
+    image_value = data.get("image_base64") or data.get("image_url") or "https://placehold.co/600x400"
     product = Product(
         name=data["name"],
         price=data["price"],
         description=data.get("description", ""),
-        image_url=data.get("image_url", "https://placehold.co/600x400"),
+        image_url=image_value,
         stock_quantity=data.get("stock_quantity", 0),
         category_id=data["category_id"],
     )
@@ -329,6 +353,8 @@ def admin_update_product(product_id):
     for field in ["name", "price", "description", "image_url", "stock_quantity", "category_id"]:
         if field in data:
             setattr(product, field, data[field])
+    if data.get("image_base64"):
+        product.image_url = data["image_base64"]
     db.session.commit()
     return jsonify({"message": "Product updated"})
 

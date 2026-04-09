@@ -43,7 +43,7 @@ CREATE TABLE IF NOT EXISTS orders (
   status ENUM('pending','approved','delivering','delivered','cancelled') DEFAULT 'pending',
   address VARCHAR(255) NOT NULL,
   phone VARCHAR(20) NOT NULL,
-  payment_method ENUM('cod','bank') DEFAULT 'cod',
+  payment_method ENUM('cod','bank','bank_transfer') DEFAULT 'cod',
   coupon_code VARCHAR(40) NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT fk_orders_user FOREIGN KEY (user_id) REFERENCES users(id)

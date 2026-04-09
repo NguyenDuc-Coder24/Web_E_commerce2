@@ -9,7 +9,7 @@ s.onload = async () => {
   }
 
   function card(p) {
-    return `<article class="card product"><img src="${p.image_url}" alt="${p.name}"><h3>${p.name}</h3><p class="price">${p.price.toLocaleString()}đ</p><p class="muted">${p.category_name || ''} • ⭐ ${p.avg_rating}</p><div class="row"><a class="btn" href="./product.html?id=${p.id}">Chi tiết</a><button onclick='addToCart(${JSON.stringify(p)})'>Thêm giỏ</button></div></article>`;
+    return `<article class="card product"><img src="${p.image_url}" alt="${p.name}"><h3>${p.name}</h3><p class="price">${p.price.toLocaleString()}đ</p><p class="muted">${p.category_name || ''} • ⭐ ${p.avg_rating} (${p.review_count})</p><p class="muted">Đã bán: ${p.total_sold}</p><div class="row"><a class="btn" href="./product.html?id=${p.id}">Chi tiết</a><button onclick='addToCart(${JSON.stringify(p)})'>Thêm giỏ</button></div></article>`;
   }
 
   window.addToCart = (product) => {
@@ -33,10 +33,18 @@ s.onload = async () => {
   }
 
   document.getElementById('filterBtn').onclick = loadProducts;
+  document.getElementById('searchInput').onkeydown = (e) => {
+    if (e.key === 'Enter') loadProducts();
+  };
+  document.getElementById('searchInput').oninput = () => {
+    clearTimeout(window.searchTimer);
+    window.searchTimer = setTimeout(loadProducts, 300);
+  };
   document.getElementById('logoutBtn').onclick = () => {
     localStorage.removeItem('token'); localStorage.removeItem('user'); showToast('Đã đăng xuất');
   };
 
   await loadCategories();
   await loadProducts();
+  updateCartBadge();
 };

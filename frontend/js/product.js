@@ -4,12 +4,24 @@ s2.onload = async () => {
   const detail = await request(`/products/${id}`);
   const p = detail.product;
 
-  document.getElementById('productDetail').innerHTML = `<h2>${p.name}</h2><img src="${p.image_url}" style="max-width:420px;width:100%;border-radius:10px"/><p>${p.description || ''}</p><p class="price">${p.price.toLocaleString()}đ</p><button id="addBtn">Thêm vào giỏ</button>`;
+  document.getElementById('productDetail').innerHTML = `
+    <h2>${p.name}</h2>
+    <img src="${p.image_url}" style="max-width:420px;width:100%;border-radius:10px"/>
+    <p>${p.description || ''}</p>
+    <p class="price">${p.price.toLocaleString()}đ</p>
+    <p class="muted">Đã bán: ${p.total_sold} • ⭐ ${p.avg_rating} (${p.review_count} đánh giá)</p>
+    <div class="row">
+      <input id="qty" type="number" min="1" value="1" style="max-width:90px" />
+      <button id="addBtn">Thêm vào giỏ</button>
+    </div>`;
   document.getElementById('addBtn').onclick = () => {
+    const quantity = Math.max(1, Number(document.getElementById('qty').value) || 1);
     const cart = getCart();
     const f = cart.find(i => i.product_id === p.id);
-    if (f) f.quantity += 1; else cart.push({ product_id:p.id, name:p.name, price:p.price, quantity:1 });
-    setCart(cart); showToast('Đã thêm vào giỏ hàng');
+    if (f) f.quantity += quantity;
+    else cart.push({ product_id: p.id, name: p.name, price: p.price, quantity });
+    setCart(cart);
+    showToast('Đã thêm vào giỏ hàng');
   };
 
   document.getElementById('relatedProducts').innerHTML = detail.related_products.map(r => `<a class='card product' href='./product.html?id=${r.id}'><img src='${r.image_url}'/><h4>${r.name}</h4></a>`).join('');
@@ -23,4 +35,6 @@ s2.onload = async () => {
       setTimeout(()=>location.reload(),500);
     } catch (err) { showToast(err.message, true); }
   };
+
+  updateCartBadge();
 };

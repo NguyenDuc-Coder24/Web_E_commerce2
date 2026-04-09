@@ -24,4 +24,17 @@ function showToast(message, error = false) {
 }
 
 function getCart() { return JSON.parse(localStorage.getItem('cart') || '[]'); }
-function setCart(cart) { localStorage.setItem('cart', JSON.stringify(cart)); }
+function setCart(cart) {
+  localStorage.setItem('cart', JSON.stringify(cart));
+  updateCartBadge();
+}
+
+function cartCount() {
+  return getCart().reduce((sum, item) => sum + item.quantity, 0);
+}
+
+function updateCartBadge() {
+  const badge = document.getElementById('cartCount');
+  if (!badge) return;
+  badge.textContent = cartCount();
+}

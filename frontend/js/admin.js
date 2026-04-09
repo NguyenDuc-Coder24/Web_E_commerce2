@@ -1,17 +1,31 @@
 const s7 = document.createElement('script'); s7.src = './js/api.js'; document.head.appendChild(s7);
 s7.onload = async () => {
+  async function loadCategoriesForForm() {
+    const cats = await request('/categories');
+    category_id.innerHTML = cats.map(c => `<option value='${c.id}'>${c.name}</option>`).join('');
+  }
+
+  async function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+    });
+  }
+
   async function load() {
     const d = await request('/admin/dashboard');
     dashboardStats.innerHTML = `<div class='card'>Doanh thu: ${d.total_revenue.toLocaleString()}đ</div><div class='card'>Đơn hàng: ${d.total_orders}</div><div class='card'>Người dùng: ${d.total_users}</div>`;
 
     const products = await request('/admin/products');
-    productTable.innerHTML = products.map(p => `<div class='row'><span>${p.name} (${p.stock_quantity})</span><div><button onclick='delP(${p.id})'>Xóa</button></div></div>`).join('');
+    productTable.innerHTML = products.map(p => `<div class='row'><span>${p.name} (${p.stock_quantity}) - Đã bán ${p.total_sold}</span><div><button onclick='delP(${p.id})'>Xóa</button></div></div>`).join('');
 
     const orders = await request('/admin/orders');
-    orderTable.innerHTML = orders.map(o => `<div class='row'><span>#${o.id} - ${o.username} - ${o.status}</span><select onchange='upOrder(${o.id}, this.value)'><option>pending</option><option>approved</option><option>delivering</option><option>delivered</option><option>cancelled</option></select></div>`).join('');
+    orderTable.innerHTML = orders.map(o => `<div class='row'><span>#${o.id} - ${o.username} - ${o.status}</span><select onchange='upOrder(${o.id}, this.value)'><option ${o.status==='pending'?'selected':''}>pending</option><option ${o.status==='approved'?'selected':''}>approved</option><option ${o.status==='delivering'?'selected':''}>delivering</option><option ${o.status==='delivered'?'selected':''}>delivered</option><option ${o.status==='cancelled'?'selected':''}>cancelled</option></select></div>`).join('');
 
     const users = await request('/admin/users');
-    userTable.innerHTML = users.map(u => `<div class='row'><span>${u.username} (${u.status})</span><select onchange='upUser(${u.id}, this.value)'><option>active</option><option>inactive</option></select></div>`).join('');
+    userTable.innerHTML = users.map(u => `<div class='row'><span>${u.username} (${u.status})</span><select onchange='upUser(${u.id}, this.value)'><option ${u.status==='active'?'selected':''}>active</option><option ${u.status==='inactive'?'selected':''}>inactive</option></select></div>`).join('');
 
     const coupons = await request('/admin/coupons');
     couponTable.innerHTML = coupons.map(c => `<div class='row'><span>${c.code} - ${c.discount_percent}% - ${c.is_active ? 'active' : 'inactive'}</span></div>`).join('');
@@ -23,7 +37,9 @@ s7.onload = async () => {
 
   productForm.onsubmit = async (e)=>{
     e.preventDefault();
-    await request('/admin/products',{method:'POST',body:JSON.stringify({name:name.value,price:Number(price.value),category_id:Number(category_id.value),stock_quantity:Number(stock_quantity.value),image_url:image_url.value,description:description.value})});
+    const file = product_image.files?.[0];
+    const image_base64 = file ? await toBase64(file) : null;
+    await request('/admin/products',{method:'POST',body:JSON.stringify({name:name.value,price:Number(price.value),category_id:Number(category_id.value),stock_quantity:Number(stock_quantity.value),image_url:image_url.value,image_base64,description:description.value})});
     showToast('Đã thêm sản phẩm'); productForm.reset(); load();
   };
 
@@ -33,5 +49,5 @@ s7.onload = async () => {
     showToast('Đã tạo coupon'); couponForm.reset(); load();
   };
 
-  try { await load(); } catch(err) { showToast(err.message, true); }
+  try { await loadCategoriesForForm(); await load(); } catch(err) { showToast(err.message, true); }
 };
